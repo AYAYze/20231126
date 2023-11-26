@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="canvas" width="500px" height="500px">
+        Nah.
+    </canvas>
+    
+    <script>
+        let canvas = document.getElementById("canvas");
+        let ctx = canvas.getContext('2d');
+
+        let width = canvas.width;
+        let height = canvas.height;
+
+        let circle = {
+            radius: 70,
+            x: width / 2,
+            y: height / 2
+        }
+        let light = {
+            lx: -0.55,
+            ly: -0.55,
+            lz: 1,
+            fAmbient: 128,
+            fDirect: 128,
+            fDot: 0,
+            getLight: function () {
+                return this.fDot * this.fDirect + this.fAmbient
+            }
+        }
+        function drawCircle() {
+            for(let y = 0; y < height; y++){
+                for(let x = 0; x < width; x++){
+
+                    let dx = x - circle.x;
+                    let dy = y - circle.y;
+                    let dzsq = circle.radius * circle.radius - dx * dx - dy * dy; 
+                    // x^2 + y^2 + z^2 = RAD
+                    // z^2 = RAD - x^2 - y^2
+                    // z를 구하고 z 기준으로 구인지와 그려질 구의 표면만 고를 수 있음. (아마 안쪽은 갈 수 없을거임. RAD인 부분만. => 즉 표면만)
+
+                    if(dzsq > 0.0) {
+                        let dz = Math.sqrt(dzsq);
+                        //z 구하기
+                        let nx = dx / circle.radius; let ny = dy / circle.radius; let nz = dz / circle.radius;
+                        //표면의 법선 벡터
+                        light.fDot = nx * light.lx + ny * light.ly + nz * light.lz;
+                        if(light.fDot >= 0){
+                            let brights = light.getLight.bind(light)();
+                            ctx.fillStyle = `rgb(${brights},${brights},${brights})`;
+                        }else {
+                            ctx.fillStyle = `rgb(${light.fAmbient},${light.fAmbient},${light.fAmbient})`;
+                        }
+                        ctx.fillRect(x, y, 1, 1);
+                    }
+
+
+                    if(x == 0 || x == width - 1 || y == 0 || y == height - 1) {
+                        ctx.fillStyle = "black";
+                        ctx.fillRect(x, y, 1,1,);
+                    }
+                }
+            }
+        }
+
+        let speedX = 5;
+        let speedY = 3;
+        setInterval(()=> {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawCircle();
+            circle.x += speedX;
+            circle.y += speedY;
+            if((circle.x + circle.radius) >= canvas.width || (circle.x - circle.radius) < 0) speedX *= -1;
+            if(circle.y + circle.radius >= canvas.height || circle.y - circle.radius < 0) speedY *= -1;
+
+            console.log(speedY, circle.x);
+        }, 50);
+    </script>
+</body>
+</html>
